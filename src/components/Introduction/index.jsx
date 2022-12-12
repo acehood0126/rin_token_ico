@@ -25,13 +25,10 @@ export default function Introduction() {
   const [currentPercent, setCurrentPercent] = useState(0);
 
   const { library, chainId, account } = useWeb3React();
-  const [tokenAddress, setTokenAddress] = useState("");
   const [availableForSale, setAvailableForSale] = useState("0");
   const [priceInUsdt, setPriceInUsdt] = useState("0");
   const [priceInEth, setPriceInEth] = useState("0");
   const [closingTime, setClosingTime] = useState("0");
-  const [amount, setAmount] = useState(0);
-  const [amountUsdt, setAmountUsdt] = useState(0);
 
   async function requestAccount() {
     if (window.ethereum?.request)
@@ -82,7 +79,6 @@ export default function Introduction() {
       RINTokenCrowdSaleArtifacts.abi,
       provider
     );
-    contract.token().then(setTokenAddress).catch(logger.error);
     contract
       .remainingTokens()
       .then((total) => {
@@ -174,7 +170,7 @@ export default function Introduction() {
       );
       const tx = await usdtContract.approve(
         RINTokenCrowdSaleArtifacts.address,
-        ethers.BigNumber.from(priceInUsdt).mul(amountUsdt)
+        parseUnits(totalCostUsdt, 18)
       );
 
       toast.promise(tx?.wait(), {
@@ -191,6 +187,14 @@ export default function Introduction() {
           );
           const callCrowSaleBuyToken = async () => {
             const userAddress = await signer.getAddress();
+            console.log(
+              "🚀 ~ file: index.jsx:194 ~ callCrowSaleBuyToken ~ userAddress",
+              userAddress
+            );
+            console.log(
+              "🚀 ~ file: index.jsx:214 ~ callCrowSaleBuyToken ~ parseUnits(totalCostUsdt, 18)",
+              parseUnits(totalCostUsdt, 18)
+            );
             const crowdSaleTx =
               await RINTokenCrowdSaleContract.buyTokensUsingUsdt(
                 userAddress,
@@ -317,7 +321,12 @@ export default function Introduction() {
                     value={tokenAmount}
                     className="bg-white/0 font-bold outline-none w-full"
                     onChange={(e) => {
-                      setTokenAmount(e.target.value);
+                      const value = Number(e.target.value);
+                      if (value > 1000) {
+                        setTokenAmount(1000);
+                      } else {
+                        setTokenAmount(e.target.value);
+                      }
                     }}
                     onKeyPress={(event) => {
                       if (!/[0-9]/.test(event.key)) {
