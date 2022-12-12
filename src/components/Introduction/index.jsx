@@ -17,7 +17,7 @@ import RINTokenArtifacts from "../../abis/RINToken.json";
 import RINTokenCrowdSaleArtifacts from "../../abis/RINTokenCrowdSale.json";
 
 const providerUrl = process.env.REACT_APP_GOERLI_PROVIDER_URL;
-const presalePercent = 15;
+const lockPercent = 30;
 
 export default function Introduction() {
   const [tokenAmount, setTokenAmount] = useState(0);
@@ -29,6 +29,9 @@ export default function Introduction() {
   const [priceInUsdt, setPriceInUsdt] = useState("0");
   const [priceInEth, setPriceInEth] = useState("0");
   const [closingTime, setClosingTime] = useState("0");
+  const [disabled, setDisable] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [transactionHash, setTransactionHash] = useState("");
 
   async function requestAccount() {
     if (window.ethereum?.request)
@@ -92,7 +95,7 @@ export default function Introduction() {
         setCurrentPercent(
           BigNumber.from(res)
             .mul(100)
-            .div(BigNumber.from(data.totalSupply).mul(presalePercent).div(100))
+            .div(BigNumber.from(data.totalSupply).mul(lockPercent).div(100))
         );
       })
       .catch(logger.error);
@@ -118,6 +121,7 @@ export default function Introduction() {
 
   // buy token base on quantity
   const buyTokensWithEth = async () => {
+    setDisable(true);
     const provider =
       library || new Web3Provider(window.ethereum || providerUrl);
     const signer = provider.getSigner();
@@ -139,21 +143,25 @@ export default function Introduction() {
         success: <b>Transaction confirmed!</b>,
         error: <b>Transaction failed!.</b>,
       });
+      setTransactionHash(transaction.hash);
 
       // refetch total token after processing
       transaction
         .wait()
         .then(() => {
           fetchCrowdsaleTokenInfo();
+          setModalVisible(true);
         })
         .catch(logger.error);
     } catch (error) {
       logger.error(error);
     }
+    setDisable(false);
   };
 
   // buy token base on quantity
   const buyTokensWithUsdt = async () => {
+    setDisable(true);
     const provider =
       library || new Web3Provider(window.ethereum || providerUrl);
     const signer = provider.getSigner();
@@ -191,10 +199,6 @@ export default function Introduction() {
               "🚀 ~ file: index.jsx:194 ~ callCrowSaleBuyToken ~ userAddress",
               userAddress
             );
-            console.log(
-              "🚀 ~ file: index.jsx:214 ~ callCrowSaleBuyToken ~ parseUnits(totalCostUsdt, 18)",
-              parseUnits(totalCostUsdt, 18)
-            );
             const crowdSaleTx =
               await RINTokenCrowdSaleContract.buyTokensUsingUsdt(
                 userAddress,
@@ -208,10 +212,13 @@ export default function Introduction() {
               error: <b>Transaction failed!.</b>,
             });
 
+            setTransactionHash(crowdSaleTx.hash);
+
             crowdSaleTx
               .wait()
               .then(() => {
                 fetchCrowdsaleTokenInfo();
+                setModalVisible(true);
               })
               .catch(logger.error);
           };
@@ -224,6 +231,7 @@ export default function Introduction() {
     } catch (error) {
       logger.error(error);
     }
+    setDisable(false);
   };
 
   const totalCostEth = (
@@ -234,139 +242,191 @@ export default function Introduction() {
   ).toString();
 
   return (
-    <Container
-      id="INTRUDUCTION"
-      className="intro flex flex-col items-center gap-8 lg:flex-row relative"
-    >
-      <div className="w-[800px] h-[800px] bg-[#4E34EE]/10 filter blur-3xl absolute top-0 left-0 rounded-full transform -translate-x-2/3 -translate-y-20" />
-      <div className="w-full lg:w-1/2">
-        <Heading className="text-7xl leading-tight !text-left">
-          Buy, Sell & Accept Digital Assets <br />
-        </Heading>
-        <div className="space-y-4 mt-8 text-center lg:text-left">
-          <Text>
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Cras
-            ultricies ligula sed ma gna dictum porta. Lorem ipsum dolor sit
-            amet, consectetur adipiscing el.
-          </Text>
-          {/* <Text>
+    <>
+      <Container
+        id="INTRUDUCTION"
+        className="intro flex flex-col items-center gap-8 lg:flex-row relative"
+      >
+        <div className="w-[800px] h-[800px] bg-[#4E34EE]/10 filter blur-3xl absolute top-0 left-0 rounded-full transform -translate-x-2/3 -translate-y-20" />
+        <div className="w-full lg:w-1/2">
+          <Heading className="text-7xl leading-tight !text-left">
+            Buy, Sell & Accept Digital Assets <br />
+          </Heading>
+          <div className="space-y-4 mt-8 text-center lg:text-left">
+            <Text>
+              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Cras
+              ultricies ligula sed ma gna dictum porta. Lorem ipsum dolor sit
+              amet, consectetur adipiscing el.
+            </Text>
+            {/* <Text>
             We plan to launch with a 9% sell tax, which will decrease 1% a week
             for 3 weeks until it reaches our normal tax rate of 6% The platform
             launch will also be 3 weeks after the presale.
           </Text> */}
-        </div>
-        <div className="flex gap-8 mt-20 flex-col md:flex-row justify-center lg:flex-row gap-y-20">
-          <button className="btn-left mt-20">See More</button>
-        </div>
+          </div>
+          <div className="flex gap-8 mt-20 flex-col md:flex-row justify-center lg:flex-row gap-y-20">
+            <button className="btn-left mt-20">See More</button>
+          </div>
 
-        {/* <div className="flex gap-8 mt-20 flex-col md:flex-row justify-center lg:flex-row gap-y-20 ">
+          {/* <div className="flex gap-8 mt-20 flex-col md:flex-row justify-center lg:flex-row gap-y-20 ">
           <Card>1.5% Prize Pool Tax in BNB</Card>
           <Card>1.5% Prize Pool Tax in Tokens</Card>
           <Card>3% Marketing/Development Cost in BNB</Card>
         </div> */}
-      </div>
-      <div>
-        <div className="contain rounded-xl">
-          <div className="box apeInfo h-75 mt-lg-0 mt-md-4">
-            <h2 className="box-heading">PRESALE IS LIVE</h2>
-            <p className="box-txt">
-              {error && "Failed to load"}
-              {isLoading && "Loading..."}
-              {!error &&
-                !isLoading &&
-                `Available for sale : ${utils.commify(
-                  formatUnits(availableForSale, 18)
-                )}`}
-            </p>
-            <div className="w-full flex flex-row justify-center px-14 py-3">
-              <div className="w-full h-[30px] rounded-full bg-[#162041]">
-                <div
-                  className={`h-full rounded-full transition-all bg-gradient-to-r from-[#8347E9] to-[#3F769D] flex flex-row justify-center items-center`}
-                  style={{
-                    width: `${currentPercent}%`,
-                    transition: "all 0.2s",
-                  }}
-                ></div>
-              </div>
-            </div>
-            <p className="box-txt">$Rin remaining {100 - currentPercent}%</p>
-            <div className="w-full flex flex-col justify-center items-center">
-              <div className="mintData">
-                <div className="flex-auto">
-                  <p>Pay With</p>
-                  <input
-                    value={currentPayment ? totalCostUsdt : totalCostEth}
-                    readOnly={true}
-                    className="bg-white/0 font-bold outline-none w-full"
-                  />
+        </div>
+        <div>
+          <div className="contain rounded-xl">
+            <div className="box apeInfo h-75 mt-lg-0 mt-md-4">
+              <h2 className="box-heading">PRESALE IS LIVE</h2>
+              <p className="box-txt">
+                {error && "Failed to load"}
+                {isLoading && "Loading..."}
+                {!error &&
+                  !isLoading &&
+                  `Available for sale : ${utils.commify(
+                    formatUnits(availableForSale, 18)
+                  )}`}
+              </p>
+              <div className="w-full flex flex-row justify-center px-14 py-3">
+                <div className="w-full h-[30px] rounded-full bg-[#162041]">
+                  <div
+                    className={`h-full rounded-full transition-all bg-gradient-to-r from-[#8347E9] to-[#3F769D] flex flex-row justify-center items-center`}
+                    style={{
+                      width: `${currentPercent}%`,
+                      transition: "all 0.2s",
+                    }}
+                  ></div>
                 </div>
+              </div>
+              <p className="box-txt">$Rin remaining {100 - currentPercent}%</p>
+              <div className="w-full flex flex-col justify-center items-center">
+                <div className="mintData">
+                  <div className="flex-auto">
+                    <p>Pay With</p>
+                    <input
+                      value={currentPayment ? totalCostUsdt : totalCostEth}
+                      readOnly={true}
+                      className="bg-white/0 font-bold outline-none w-full"
+                    />
+                  </div>
+                  <button
+                    className="font-bold flex flex-col items-center uppercase"
+                    onClick={() => {
+                      setCurrentPayment(!currentPayment);
+                    }}
+                  >
+                    <img
+                      src={`/assets/coins/${
+                        currentPayment ? "usdt" : "eth"
+                      }.png`}
+                      className="w-[35px]"
+                      alt=""
+                    />
+                    {currentPayment ? "usdt" : "eth"}
+                  </button>
+                </div>
+                <div className="mintData">
+                  <div className="flex-auto">
+                    <p>Get</p>
+                    <input
+                      disabled={disabled}
+                      value={tokenAmount}
+                      className="bg-white/0 font-bold outline-none w-full"
+                      onChange={(e) => {
+                        const value = Number(e.target.value);
+                        if (value > 1000) {
+                          setTokenAmount(1000);
+                        } else {
+                          setTokenAmount(e.target.value);
+                        }
+                      }}
+                      onKeyPress={(event) => {
+                        if (!/[0-9]/.test(event.key)) {
+                          event.preventDefault();
+                        }
+                      }}
+                    />
+                  </div>
+                  <button className="font-bold flex flex-col items-center uppercase">
+                    <img
+                      src="/assets/coins/msg.png"
+                      className="w-[35px]"
+                      alt=""
+                    />
+                    RIN
+                  </button>
+                </div>
+              </div>
+              <h5 className="mint-txt">
+                1 RIN ={" "}
+                {currentPayment
+                  ? `${utils.commify(formatUnits(priceInUsdt, 18))} USDT`
+                  : `${utils.commify(formatUnits(priceInEth, 18))} ETH`}
+              </h5>
+              <div className="bt">
                 <button
-                  className="font-bold flex flex-col items-center uppercase"
+                  href="#"
+                  className="btn1"
                   onClick={() => {
-                    setCurrentPayment(!currentPayment);
+                    if (tokenAmount == 0) {
+                      toast.error("You should buy at least 1 $RIN");
+                    } else {
+                      currentPayment ? buyTokensWithUsdt() : buyTokensWithEth();
+                    }
                   }}
                 >
-                  <img
-                    src={`/assets/coins/${currentPayment ? "usdt" : "eth"}.png`}
-                    className="w-[35px]"
-                    alt=""
-                  />
-                  {currentPayment ? "usdt" : "eth"}
+                  Buy Now
                 </button>
               </div>
-              <div className="mintData">
-                <div className="flex-auto">
-                  <p>Get</p>
-                  <input
-                    value={tokenAmount}
-                    className="bg-white/0 font-bold outline-none w-full"
-                    onChange={(e) => {
-                      const value = Number(e.target.value);
-                      if (value > 1000) {
-                        setTokenAmount(1000);
-                      } else {
-                        setTokenAmount(e.target.value);
-                      }
-                    }}
-                    onKeyPress={(event) => {
-                      if (!/[0-9]/.test(event.key)) {
-                        event.preventDefault();
-                      }
-                    }}
-                  />
-                </div>
-                <button className="font-bold flex flex-col items-center uppercase">
-                  <img
-                    src="/assets/coins/msg.png"
-                    className="w-[35px]"
-                    alt=""
-                  />
-                  RIN
-                </button>
-              </div>
-            </div>
-            <h5 className="mint-txt">
-              1 RIN ={" "}
-              {currentPayment
-                ? `${utils.commify(formatUnits(priceInUsdt, 18))} USDT`
-                : `${utils.commify(formatUnits(priceInEth, 18))} ETH`}
-            </h5>
-            <div className="bt">
-              <button
-                href="#"
-                className="btn1"
-                onClick={() => {
-                  currentPayment ? buyTokensWithUsdt() : buyTokensWithEth();
-                }}
-              >
-                Buy Now
-              </button>
             </div>
           </div>
+          <div className="w-60 h-96 transform translate-x-[80%] -translate-y-1/4 -rotate-6  p-4 overflow-hidden rounded-xl"></div>
         </div>
-        <div className="w-60 h-96 transform translate-x-[80%] -translate-y-1/4 -rotate-6  p-4 overflow-hidden rounded-xl"></div>
+      </Container>
+      <div
+        className={`w-full h-screen z-50 bg-black/60 top-0 left-0 flex flex-row justify-center items-center ${
+          modalVisible ? "fixed" : "hidden"
+        }`}
+      >
+        <div className="p-10 bg-[#0B142F] rounded-md flex flex-col gap-3 justify-center items-center">
+          <img src="/assets/check.png" alt="" />
+          <p className="text-white text-[20px] font-bold">
+            Your Purchase was Successful!
+          </p>
+          <p className="text-white text-center">
+            {(tokenAmount * lockPercent) / 100} $RIN will be available for
+            you to
+            <br /> claim once the presale ends
+          </p>
+          <div className="flex flex-row gap-3 mt-4">
+            <a
+              className="text-white py-3 w-[170px] flex justify-center items-center bg-gradient-to-r from-[#8347E9] to-[#3F769D] rounded-md font-bold"
+              href={`https://goerli.etherscan.io/tx/${transactionHash}`}
+              target="_blank"
+              rel="noreferrer noopener"
+            >
+              View Transaction
+            </a>
+            <button
+              className="text-white py-3 w-[170px] flex justify-center items-center bg-gradient-to-r from-[#8347E9] to-[#3F769D] rounded-md font-bold"
+              onClick={() => {
+                setModalVisible(false);
+              }}
+            >
+              Start Again
+            </button>
+            <button
+              className="text-white py-3 w-[170px] flex justify-center items-center bg-gradient-to-r from-[#8347E9] to-[#3F769D] rounded-md font-bold"
+              onClick={() => {
+                setModalVisible(false);
+              }}
+            >
+              Finish
+            </button>
+          </div>
+        </div>
       </div>
-    </Container>
+    </>
   );
 }
 
