@@ -20,7 +20,7 @@ const providerUrl = process.env.REACT_APP_GOERLI_PROVIDER_URL;
 const lockPercent = 30;
 
 export default function Introduction() {
-  const [tokenAmount, setTokenAmount] = useState(0);
+  const [tokenAmount, setTokenAmount] = useState(1000);
   const [currentPayment, setCurrentPayment] = useState(true);
   const [currentPercent, setCurrentPercent] = useState(0);
 
@@ -333,12 +333,9 @@ export default function Introduction() {
                       value={tokenAmount}
                       className="bg-white/0 font-bold outline-none w-full"
                       onChange={(e) => {
-                        const value = Number(e.target.value);
-                        if (value > 1000) {
-                          setTokenAmount(1000);
-                        } else {
+
                           setTokenAmount(e.target.value);
-                        }
+
                       }}
                       onKeyPress={(event) => {
                         if (!/[0-9]/.test(event.key)) {
@@ -368,8 +365,8 @@ export default function Introduction() {
                   href="#"
                   className="btn1"
                   onClick={() => {
-                    if (tokenAmount == 0) {
-                      toast.error("You should buy at least 1 $RIN");
+                    if (tokenAmount < 1000) {
+                      toast.error("You should buy at least 1000 $RIN");
                     } else {
                       currentPayment ? buyTokensWithUsdt() : buyTokensWithEth();
                     }
