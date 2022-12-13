@@ -333,9 +333,7 @@ export default function Introduction() {
                       value={tokenAmount}
                       className="bg-white/0 font-bold outline-none w-full"
                       onChange={(e) => {
-
-                          setTokenAmount(e.target.value);
-
+                        setTokenAmount(e.target.value);
                       }}
                       onKeyPress={(event) => {
                         if (!/[0-9]/.test(event.key)) {
